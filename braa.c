@@ -21,7 +21,7 @@
 
 void help(void)
 {
-	printf("braa 0.81 - Mateusz 'mteg' Golicz <mtg@elsat.net.pl>, 2003 - 2006\n");
+	printf("braa 0.83 - (c) by Mateusz 'mteg' Golicz <mtg@elsat.net.pl> and contributors, 2003 - 2015\n");
 	printf("usage: braa [options] [query1] [query2] ...\n");
 	printf("  -h        Show this help.\n");
 	printf("  -2        Claim to be a SNMP2C agent.\n");
@@ -29,6 +29,7 @@ void help(void)
 	printf("  -x        Hexdump octet-strings\n");
 	printf("  -t <s>    Wait <s> seconds for responses.\n");
 	printf("  -d <s>    Wait <s> microseconds after sending each packet.\n");
+	printf("  -w <s>    Wait <s> microseconds after sending a group of query packets.\n");
 	printf("  -p <s>    Wait <s> miliseconds between subsequent passes.\n");
 	printf("  -f <file> Load queries from file <file> (one by line).\n");
 	printf("  -a <time> Quit after <time> seconds, independent on what happens.\n");
@@ -66,13 +67,14 @@ int main(int argc, char **argv)
 		  [community@]host[:port]:oid.[/id]=... - set */
 	
 	int c, i, ver = BRAA_VERSION_SNMP1, verbose = 0,
-	    r = 3, time = 2, sdelay = 0, pass_delay = 500, hexdump = 0;
+	    r = 3, time = 2, sdelay = 0, pass_delay = 500, hexdump = 0,
+	    xdelay = DEFAULT_XDELAY;
 
 	struct query_hostrange * head = NULL;
 	struct queryhash * qh;
 	char error[ERRORBUFFER_SIZE];
 	
-	while((c = getopt(argc, argv, "a:h2vd:r:p:d:f:t:x")) != EOF)
+	while((c = getopt(argc, argv, "a:h2vd:r:p:d:f:t:xw:")) != EOF)
 	{
 		switch(c)
 		{
@@ -92,6 +94,7 @@ int main(int argc, char **argv)
 						return 1;
 					  }
 					  break;
+                        case 'w': xdelay = atoi(optarg); break;
 			case 'a': 
 			{
 				int t;
@@ -176,7 +179,7 @@ int main(int argc, char **argv)
 		
 		for(;;)
 		{
-			if(!bapp_sendmessage(qh, s, r, DEFAULT_XDELAY, sdelay, pass_delay)) break;
+			if(!bapp_sendmessage(qh, s, r, xdelay, sdelay, pass_delay)) break;
 			if(bapp_processmessages(s, qh, hexdump)) break;
 			usleep(250);
 		}
