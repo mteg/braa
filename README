@@ -1,0 +1,239 @@
+
+1. OVERVIEW
+
+  Braa is a mass snmp scanner. The intended usage of such a tool is of course 
+making SNMP queries - but unlike snmpget or snmpwalk from net-snmp, it is able
+to query dozens or hundreds of hosts simultaneously, and in a single process.
+Thus, it consumes very few system resources and does the scanning VERY fast.
+  
+  Braa implements its OWN snmp stack, so it does NOT need any SNMP libraries
+like net-snmp. The implementation is very dirty, supports only several data
+types, and in any case cannot be stated 'standard-conforming'! It was designed
+to be fast, and it is fast. For this reason (well, and also because of my
+laziness ;), there is no ASN.1 parser in braa - you HAVE to know the numerical
+values of OID's (for instance .1.3.6.1.2.1.1.5.0 instead of system.sysName.0).
+
+2. REQUIREMENTS
+  
+  * an *IX system implementing BSD sockets and some POSIX syscalls
+  * large ARP table - if you plan to query thousands of hosts, make
+    sure your system is capable of managing thousands of ARP entries,
+    for instance tune the gc_thresh values in Linux...
+
+  * it is also good to have a complete SNMP package installed somewhere,
+    because braa accepts only numerical OID's, so you may need to make
+    use of snmptranslate.
+
+  Braa is not at all portable - it was tested only on several setups:
+  * Linux (shaerrawedd 2.4.19-xfs #7 Fri Oct 4 18:18:38 CEST 2002 i686 unknown)
+  * FreeBSD (venom 4.6.2-RELEASE-p10 FreeBSD 4.6.2-RELEASE-p10 #0: Tue Mar 25
+           12:59:45 CET 2003     root@venom:/usr/src/sys/compile/VENOM-3  i386)
+  * OpenBSD (pantera 3.3 PANTERA#0 i386)
+
+  With minor adjustments, braa should also work under SunOS, and actually, any
+  POSIX-compilant UNIX system. The problem is I just do not have access to any
+  machines running something different than BSD or Linux.
+
+3. INSTALLATION
+
+  * edit Makefile and uncomment the right setting for your OS
+  * do a 'make'
+  * copy the 'braa' binary into a desired place.
+   
+4. USAGE
+
+    Braa is controlled from the command line using a standard
+  getopt approach:
+  
+  braa [-2] [-v] [-t <s>] [-f <file>] [-a <time>] [-r <retries>] [-d <delay>] [querylist1] [querylist2] ...
+
+    As you can see, the list of queries to make is specified as a
+  commandline argument. The syntax of the query list follows:
+  
+    [community@]host1[-host2][:port]:query1[/id][,query2[/id][,query3[/id]...]]
+
+    Well, this seems quite complicated, but let us have a look at few examples:
+	
+	10.253.101.1:.1.3.6.1.2.1.1.6.0
+	10.253.101.1:.1.3.6.1.2.1.1.*
+	10.253.101.1-10.253.101.50:.1.3.6.1.2.1.1.6.0
+	10.253.101.1:.1.3.6.1.2.1.1.4.0/ContactPerson,.1.3.6.1.2.1.4.20.*/RoutingTable
+	private@10.253.101.1-10.253.101.50:.1.3.6.1.2.1.1.6.0=sMy network
+	
+	The strings after the last colon are the actual queries to be made. To make
+  a GET query (to retrieve a value under a specific Object ID, just what snmpget
+  does), one specifies only the Object ID. As it was stated in the Overview,
+  braa accepts only numerical OIDs, and this is why you need the fully-featured
+  SNMP package: to translate OIDs. You can get numerical OIDs from symbolic ones
+  using the 'snmptranslate' command from a complete SNMP package, usually by
+  issuing something like:
+
+    $ snmptranslate -mall system.sysLocation.0
+    .1.3.6.1.2.1.1.6.0
+
+    So, the first example is a GET query on object .1.3.6.1.2.1.1.6.0 - which is
+  just system.sysLocation.0. Running 'braa 10.253.101.1:.1.3.6.1.2.1.1.6.0'
+  would return something like:
+  
+    10.253.101.1:25ms:.1.3.6.1.2.1.1.6.0:Elsat HFC Network, Ruda Sl/Bytom/Radzionkow, Poland
+
+    Which means 10.253.101.1 answered in about 25 ms and claimed, that
+  system.sysLocation.0 contains the string "Elsat HFC (...)". Keep on mind
+  that the response time is in fact very inaccurate...
+
+
+    Another query type is the WALK query. WALK queries make braa traverse
+  the object tree hierachy ,,below'' a specified object, like snmpwalk
+  does. The second example:
+	10.253.101.1:.1.3.6.1.2.1.1.*
+    is a WALK query on the 'system' (.1.3.6.1.2.1.1) object; the output
+  would look like:
+
+    10.253.101.1:26ms:.1.3.6.1.2.1.1.1.0:Thomson DOCSIS Cable Modem <<HW_REV: 2.1; VENDOR: Thomson; BOOTR: 2.1.4c; SW_REV: ST33.02.04; MODEL: TCM390>>
+    10.253.101.1:24ms:.1.3.6.1.2.1.1.2.0:.1.3.6.1.4.1.2863.390.2.1.51.2.4
+    10.253.101.1:28ms:.1.3.6.1.2.1.1.3.0:726500
+    10.253.101.1:28ms:.1.3.6.1.2.1.1.4.0:Mateusz Golicz MG452-RIPE <mtg@elsat.net.pl>
+    10.253.101.1:27ms:.1.3.6.1.2.1.1.5.0:Thomson 390 DOCSIS CM, DOCSIS 1.1 MODE
+    10.253.101.1:27ms:.1.3.6.1.2.1.1.6.0:Elsat HFC Network, Ruda Sl/Bytom/Radzionkow, Poland
+    ...
+    
+	To query 50 hosts, from 10.253.101.1 to 10.253.101.50 for
+  system.sysLocation.0 one could of course issue something like:
+
+    braa 10.253.101.1:.1.3.6.1.2.1.1.6.0 10.253.101.2:.1.3.6.1.2.1.1.6.0 ...
+
+    ... but it is much more comfortable to specify a host range instead a single
+  host in the query list specification, like in the third example:
+
+    braa 10.253.101.1-10.253.101.50:.1.3.6.1.2.1.1.6.0
+  
+    And as usually, the output: 
+	
+	10.253.101.47:53ms:.1.3.6.1.2.1.1.6.0:Elsat HFC Network, Ruda Sl/Bytom/Radzionkow, Poland
+    10.253.101.46:55ms:.1.3.6.1.2.1.1.6.0:Elsat HFC Network, Ruda Sl/Bytom/Radzionkow, Poland
+    10.253.101.1:56ms:.1.3.6.1.2.1.1.6.0:Elsat HFC Network, Ruda Sl/Bytom/Radzionkow, Poland
+    10.253.101.42:84ms:.1.3.6.1.2.1.1.6.0:Elsat HFC Network, Ruda Sl/Bytom/Radzionkow, Poland
+
+
+    As you can see in the next example:
+
+    10.253.101.1:.1.3.6.1.2.1.1.4.0/ContactPerson,.1.3.6.1.2.1.4.20.*/RoutingTable
+
+    ... a comma character is used to separate queries in case one wants to
+  specify more queries in a query list. The example also shows how to make
+  advantage of query IDs. The IDs (after a slash) do not affect the querying
+  process itself, but they are just printed before appropiate lines of output:
+  
+    ContactPerson:10.253.101.1:25ms:.1.3.6.1.2.1.1.4.0:Mateusz Golicz MG452-RIPE <mtg@elsat.net.pl>
+    RoutingTable:10.253.101.1:29ms:.1.3.6.1.2.1.4.20.1.1.10.253.101.1:10.253.101.1
+    RoutingTable:10.253.101.1:23ms:.1.3.6.1.2.1.4.20.1.1.127.0.0.1:127.0.0.1
+    RoutingTable:10.253.101.1:26ms:.1.3.6.1.2.1.4.20.1.1.192.168.100.1:192.168.100.1
+    RoutingTable:10.253.101.1:27ms:.1.3.6.1.2.1.4.20.1.2.10.253.101.1:2
+
+    ... so it is easier to split and parse braa output using automated
+  tools like awk.
+
+
+    The last example demonstrates the SET query: 
+
+	private@10.253.101.1-10.253.101.50:.1.3.6.1.2.1.1.6.0=sMy network
+	
+	This attempts to set .1.3.6.1.2.1.1.6.0 (which is again my
+  favourite system.sysLocation.0) at hosts 10.253.101.1 up to 50 to
+  'My network'. The "s" before the right value specifies the value type;
+  braa supports currently:
+     s String      (eg. "sMy Network")
+	 a IP Address  (eg. "a10.253.100.1")
+	 i Integer     (eg. "i10")
+	 o OID         (eg. "o.1.3.6.1.2.1.4.20.1.1.10.253.101.1")
+	If the type prefix is not specified (eg. the character after
+  '=' is none of the above), braa attempts to auto-detect the type.
+
+	The 'private@' part before the host range of course sets the
+  SNMP community name for the transaction to 'private'.
+
+    ... and that seems to be all about the query format. You may
+  also make a file containing the query lists one by line instead
+  of providing them as commandline arguments. Use the -f option to
+  load queries from such a list. Other options are:
+
+    -r <count>     retry count: try making each query <count> times 
+  before giving up. By default, the retry count is set to 3.
+  
+    -a <seconds>   deadline time; makes braa quit after <seconds> 
+  seconds, independent on what happens. 
+
+    -2             SNMPv2C - braa will introduce itself as a SNMPv2C
+  agent (but in fact the packets are always constructed according
+  to SNMP1 RFCs). This is useful for retrieving data from objects
+  that hold data types not covered by the SNMP1 specification - at
+  the moment the only such supported data type is Counter64.
+  
+    -t <seconds>   Wait <seconds> seconds for responses. When
+  nothing happens for the given time (there are no more messages
+  to send and nothing more is received), braa quits. The default
+  is 2 seconds.
+  
+    -d <micro>     Makes braa wait for <micro> microseconds after
+  sending each packet. Useful if the bandwidth between you and
+  the devices you are querying is limited - see the short explanation
+  on how braa works below.
+  
+    -h             Help, shows a short summary of this manual ;)
+
+5. REMARKS
+
+    Braa takes full advantage of the possibility to make serveral SNMP
+  queries using a single SNMP packet and will never send more than one
+  packet per a query type (of course except retries if there was no answer)
+  to a host (btw, see LIMITATIONS). This means that the following commands:
+  
+     braa 10.253.101.1:.1.3.6.1.2.1.1.6.0 10.253.101.1:.1.3.6.1.2.1.1.5.0
+     braa 10.253.101.1:.1.3.6.1.2.1.1.5.0,.1.3.6.1.2.1.1.6.0
+
+    Do EXACTLY the same: a SINGLE packet requesting information on
+  .1.3.6.1.2.1.1.5.0 and .1.3.6.1.2.1.1.6.0 is sent to 10.253.101.1.
+  
+    Braa sends queries for every host on the query list, meanwhile
+  listening for answers (non-blocking sockets are used for this
+  purpose). Every upcoming answer is immediately decoded and
+  outputted. After queries for all hosts have been sent, it waits
+  20 ms, and then every host that did not answered in the first pass is
+  sent the query again. The passes continue, until the retry count
+  (specified using the -r option) is achieved or until all the hosts
+  have answered. In the first case, braa waits then for any delayed
+  messages for 2 seconds (this timeout might be changed by the -t option).
+
+    Each time a packet is sent, braa might wait for a short period so
+  as not to flood the link to its SNMP peers. This is controlled by the
+  -d option.
+  
+    When querying multiple hosts always make sure your ARP table
+  can hold enough entries (eg. you might have to adjust
+  /proc/sys/net/ipv4/neigh/default/gc_thresh* under Linux).
+
+6. BUGS AND LIMITATIONS
+
+  * the only supported datatypes are: integer (gauge, counter, timeticks, etc.)
+    counter64, string, ipaddress, OID. Of course you are free to modify
+	braaasn.c/braaasn.h to support more types...
+  * braa will never send more than 1500 bytes (or a single packet) to a host
+    in a single try. Thus the number of queries that might be sent to a single
+    host is limited. Additionally, if you reach the limit by specifying too many
+    queries, braa will terminate the whole scanning process... I can't tell
+    what the limit exactly is, it just depends on many factors (mainly, the
+    length of OIDs), anyway, 15 queries per hosts sounds dangerous, and better
+    try not to exceed this number.
+  * it is impossible to specify FQDN hostnames - you always have to give IP
+    addresses of hosts... well, I think it'll be corrected in future
+    versions, if there will be ones.
+
+7. AUTHORS, ACKNOWLEDGEMENTS
+
+  Mateusz 'mteg' Golicz <mtg@elsat.net.pl>
+
+8. LICENSE
+
+  The package is licensed on GNU General Public License. See COPYING file.
+
+Mateusz 'mteg' Golicz <mtg@elsat.net.pl>

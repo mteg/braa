@@ -1,0 +1,18 @@
+asnobject * braa_GetRequestPDU_Create(void);
+void braa_GetRequestPDU_Insert(asnobject *pdu, oid *o);
+// static inline asnobject * braa_Msg_Create(asnobject *pdu, char * community, int version);
+asnobject * braa_GetRequestMsg_Create(char * community, int version);
+void braa_GetRequestMsg_Insert(asnobject *msg, oid *o);
+int braa_Msg_Identify(asnobject *msg);
+int braa_PDUMsg_GetVariableCount(asnobject *msg);
+asnobject * braa_PDUMsg_GetVariableName(asnobject *msg, int n);
+asnobject * braa_PDUMsg_GetVariableValue(asnobject *msg, int n);
+int braa_PDUMsg_GetErrorCode(asnobject *msg);
+int braa_PDUMsg_GetErrorIndex(asnobject *msg);
+char * braa_StrError(int error);
+void braa_SetRequestMsg_Insert(asnobject *msg, oid *o, asnobject *val);
+asnobject * braa_SetRequestMsg_Create(char * community, int version);
+int braa_PDUMsg_GetRequestID(asnobject *msg);
+asnobject * braa_GetNextRequestMsg_Create(char * community, int version);
+void braa_GetNextRequestMsg_Insert(asnobject *msg, oid *o);
+void braa_RequestMsg_ModifyID(asnobject *msg, int to);
