@@ -649,8 +649,16 @@ int bapp_processmessages(int s, struct queryhash *qh, int hexdump)
 							braa_ASNObject_ToString(value, buffer, 500, hexdump);
 							printf("%s\n", buffer);
 							if(q->latest_oid[walkid])
+							{
+								if(braa_OID_Compare(q->latest_oid[walkid], (oid*) name->pdata))
+								{
+									fprintf(stderr,"%s:The oids in walk are not increasing!\n", inet_ntoa(sa.sin_addr));
+									q->walk_retries[walkid] = RETRIES_MAX;
+									qh->responses_received++;
+									break;
+								}
 								braa_OID_Dispose(q->latest_oid[walkid]);
-							
+							}
 							q->latest_oid[walkid] = braa_OID_Duplicate((oid*) name->pdata);
 							q->walk_retries[walkid] = 0;
 						}
