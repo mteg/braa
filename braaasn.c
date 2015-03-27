@@ -186,7 +186,7 @@ struct braa_asnobject * braa_InternalDecodeBER(u_int8_t * data, u_int32_t size, 
 		debug("!!! Null of size %d\n", size);
 #endif
 	
-	if(size <= 0)
+	if(size < 0)
 	{
 		debug("!!! Invalid size (short packet).\n");
 		return(NULL); /* short packet */

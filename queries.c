@@ -640,7 +640,7 @@ int bapp_processmessages(int s, struct queryhash *qh, int hexdump)
 							char buffer[500];
 
 							if(q->range->walk_ids[walkid])
-								fprintf(stderr, "%s:", q->range->walk_ids[walkid]);
+								printf("%s:", q->range->walk_ids[walkid]);
 
 							value = braa_PDUMsg_GetVariableValue(ao, 0);
 							printf("%s:%dms:", inet_ntoa(sa.sin_addr), delay);
