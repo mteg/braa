@@ -29,10 +29,10 @@ void braa_OID_ToString(oid * o, unsigned char * buffer, int buffer_len)
 	buffer[0] = 0;
 	for(i = 0; i<o->len; i++)
 	{
-		unsigned char ib[12];
+		unsigned char ib[14];
 		int n;
 		
-		n = snprintf(ib, 10, ".%d", o->oid[i]);
+		n = snprintf(ib, 12, ".%d", o->oid[i]);
 		if((l + n + 1) < buffer_len)
 			sprintf(buffer, "%s%s", buffer, ib);
 		else

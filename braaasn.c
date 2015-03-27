@@ -56,13 +56,22 @@ static u_int32_t braa_EncodeShortBitstringOid(u_int8_t * buffer, u_int32_t v)
 		buffer[2] = (v & 0x7f);
 		return(3);
 	}
-	else
+	else if(! (v & 0xf0000000))
 	{
 		buffer[0] = ((v >> 21) & 0x7f) | 0x80;
 		buffer[1] = ((v >> 14) & 0x7f) | 0x80;
 		buffer[2] = ((v >> 7) & 0x7f) | 0x80;
 		buffer[3] = (v & 0x7f);
 		return(4);
+	}
+	else
+	{
+		buffer[0] = ((v >> 28) & 0x7f) | 0x80;
+		buffer[1] = ((v >> 21) & 0x7f) | 0x80;
+		buffer[2] = ((v >> 14) & 0x7f) | 0x80;
+		buffer[3] = ((v >> 7) & 0x7f) | 0x80;
+		buffer[4] = (v & 0x7f);
+		return(5);
 	}
 }
 
@@ -72,7 +81,7 @@ static u_int32_t braa_FetchShortBitstring(u_int8_t * data, int max, u_int8_t * s
 	u_int32_t ret = 0;
 	int i;
 	
-	for(i = 0; i < 4 && i < max; i++)
+	for(i = 0; i < 5 && i < max; i++)
 	{
 		ret <<= 7;
 		ret |= data[i] & 0x7f;
