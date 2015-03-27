@@ -585,7 +585,7 @@ static void braa_InternalDumpASNObject(struct braa_asnobject * obj, int lvl)
 			fprintf(stderr, "%s=> String: '%s'\n", indent, (char*) obj->pdata);
 			break;
 		case BRAAASN_COUNTER64:
-			fprintf(stderr, "%s=> Counter64: '%Ld'\n", indent, *((u_int64_t*) obj->pdata));
+			fprintf(stderr, "%s=> Counter64: '%llu'\n", indent, *((u_int64_t*) obj->pdata));
 			break;
 		case BRAAASN_IPADDR:
 			{
@@ -643,7 +643,7 @@ void braa_ASNObject_ToString(struct braa_asnobject * obj, unsigned char * buffer
 			snprintf(buffer, size, "(null object)");
 			break;
 		case BRAAASN_COUNTER64:
-			snprintf(buffer, size, "%Ld", *((u_int64_t*) obj->pdata));
+			snprintf(buffer, size, "%llu", *((u_int64_t*) obj->pdata));
 			break;
 		case BRAAASN_INTEGER:
 		case BRAAASN_GAUGE:
