@@ -376,6 +376,12 @@ struct braa_asnobject * braa_InternalDecodeBER(u_int8_t * data, u_int32_t size, 
 			*bytesused = bu;
 			return(ret);
 		}
+		case BRAAASN_ERR_NOSUCHOBJECT:
+		case BRAAASN_ERR_NOSUCHINSTANCE:
+		case BRAAASN_ERR_ENDOFMIBVIEW:
+			*bytesused = bu;
+			return(braa_ASNObject_Create(tag, 0, NULL));
+		
 		default:
 			debug("Object type %x not supported.", type);
 			return(NULL);
@@ -702,6 +708,18 @@ void braa_ASNObject_ToString(struct braa_asnobject * obj, unsigned char * buffer
 		case BRAAASN_PDU_SETREQUEST:
 			snprintf(buffer, size, "(Complex object type (tree))");
 			break;
+		case BRAAASN_ERR_NOSUCHOBJECT:
+			snprintf(buffer, size, "--- Error: No such object");
+			break;
+
+		case BRAAASN_ERR_NOSUCHINSTANCE:
+			snprintf(buffer, size, "--- Error: No such instance");
+			break;
+
+		case BRAAASN_ERR_ENDOFMIBVIEW:
+			snprintf(buffer, size, "--- Error: End of MIB view");
+			break;
+			
 		default:
 			snprintf(buffer, size, "(Unknown object type)");
 			break;

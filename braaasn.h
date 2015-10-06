@@ -23,6 +23,10 @@ typedef uint64_t u_int64_t;
 #define BRAAASN_NULL 0x05
 #define BRAAASN_OID 0x06
 
+#define BRAAASN_ERR_NOSUCHOBJECT 0x80
+#define BRAAASN_ERR_NOSUCHINSTANCE 0x81
+#define BRAAASN_ERR_ENDOFMIBVIEW 0x82
+
 #define BRAAASN_SEQUENCE 0x30
 
 #define BRAAASN_PDU_GETREQUEST 0xa0
@@ -41,6 +45,7 @@ typedef uint64_t u_int64_t;
 
 #define BRAAASN_NSAPADDR 0x45
 /* ^^Not supported */
+
 
 struct braa_asnobject
 {

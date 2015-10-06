@@ -87,8 +87,11 @@ oid * braa_OID_CreateFromString(unsigned char* str)
 	}
 	n->len = s;
 #ifdef DEBUG
-	for(b = 0; b < s; b++)
-		printf("OID DIGIT: %d (of %d)\n", n->oid[b], b);
+	{
+		int b;
+		for(b = 0; b < s; b++)
+			printf("OID DIGIT: %d (of %d)\n", n->oid[b], b);
+	}
 #endif
 	
 	return(n);
