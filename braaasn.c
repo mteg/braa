@@ -661,10 +661,10 @@ void braa_ASNObject_ToString(struct braa_asnobject * obj, unsigned char * buffer
 			snprintf(buffer, size, "%llu", *((u_int64_t*) obj->pdata));
 			break;
 		case BRAAASN_INTEGER:
-		case BRAAASN_GAUGE:
 			snprintf(buffer, size, "%d", obj->ldata);
 			break;
 		case BRAAASN_COUNTER:
+		case BRAAASN_GAUGE:
 		case BRAAASN_TIMETICKS:
 			snprintf(buffer, size, "%u", obj->ldata);
 			break;
