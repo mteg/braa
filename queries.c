@@ -539,7 +539,7 @@ int bapp_processmessages(int s, struct queryhash *qh, int hexdump)
 			resp = braa_PDUMsg_GetRequestID(ao);
 
 			secd = (tv.tv_sec % 64) - (((resp >> 8) & 0xffff) / 1000);
-			if(secd < 0) secd = 64 - secd;
+			if(secd < 0) secd = 64 + secd; //secd is negative
 			delay = secd * 1000 + (tv.tv_usec / 1000) - (((resp >> 8) & 0xffff) % 1000);
 
 			error = braa_PDUMsg_GetErrorCode(ao);
