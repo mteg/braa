@@ -1,4 +1,4 @@
-#include <sys/types.h>
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -138,13 +138,16 @@ struct braa_asnobject * braa_InternalDecodeBER(u_int8_t * data, u_int32_t size, 
 		len = 0; /* indefinite length */
 		data += 1;
 		size -= 1; bu += 1;
-		for(i = 0; i< (size - 1); i++)
+		if(size > 0)
 		{
-			if(data[i] == 0 && data[i + 1] == 0)
+			for(i = 0; i< (size - 1); i++)
 			{
-				len = i;
-				break;
-			} 
+				if(data[i] == 0 && data[i + 1] == 0)
+				{
+					len = i;
+					break;
+				} 
+			}
 		}
 	}
 	else
@@ -157,9 +160,20 @@ struct braa_asnobject * braa_InternalDecodeBER(u_int8_t * data, u_int32_t size, 
 		    for(j = 0; j < noct; j++)
 		    {
 			len <<= 8;
+			if((j + 1) >= size)
+			{
+				debug("!!! Malformed length field\n");
+				return(NULL);
+			}
 			len |= data[j + 1];
 		    }
 		    data += noct + 1;
+		    if(size < (noct + 1))
+		    {
+			debug("!!! Malformed length field\n");
+			return(NULL);
+		    }
+		    
 		    size -= noct + 1;
 		    bu += noct + 1;
 		}
@@ -255,8 +269,16 @@ struct braa_asnobject * braa_InternalDecodeBER(u_int8_t * data, u_int32_t size, 
 		case BRAAASN_OCTETSTRING:
 		{
 			struct braa_asnobject * ret;
-			u_int8_t * ostr = (u_int8_t *) malloc(len + 1);
+			u_int8_t * ostr;
+			
+			if(len > BRAAASN_OCTETSTRING_LIMIT)
+			{
+				debug("Refusing to decode an octet string larger than %d bytes\n", BRAAASN_OCTETSTRING_LIMIT);
+				return (NULL);
+			}
+			ostr = (u_int8_t *) malloc(len + 1);
 			if(!ostr) return(NULL); /* No memory */
+			
 			memcpy(ostr, data, len);
 			ostr[len] = 0;
 			bu += len;
@@ -327,6 +349,7 @@ struct braa_asnobject * braa_InternalDecodeBER(u_int8_t * data, u_int32_t size, 
 		case BRAAASN_SEQUENCE:
 		case BRAAASN_PDU_GETREQUEST:
 		case BRAAASN_PDU_GETNEXTREQUEST:
+		case BRAAASN_PDU_GETBULKREQUEST:
 		case BRAAASN_PDU_SETREQUEST:
 		case BRAAASN_PDU_GETRESPONSE:
 		{
@@ -471,6 +494,7 @@ int braa_ASNObject_EncodeBER(struct braa_asnobject * data, u_int8_t * buffer, u_
 		case BRAAASN_SEQUENCE:
 		case BRAAASN_PDU_GETREQUEST:
 		case BRAAASN_PDU_GETNEXTREQUEST:
+		case BRAAASN_PDU_GETBULKREQUEST:
 		case BRAAASN_PDU_SETREQUEST:
 		case BRAAASN_PDU_GETRESPONSE:
 		{
@@ -560,6 +584,7 @@ void braa_ASNObject_Dispose(struct braa_asnobject * obj)
 		case BRAAASN_PDU_GETRESPONSE:
 		case BRAAASN_PDU_SETREQUEST:
 		case BRAAASN_PDU_GETNEXTREQUEST:
+		case BRAAASN_PDU_GETBULKREQUEST:
 			debug("=> Disposing SEQUENCE...\n");
 			for(i = 0, n = obj->ldata; i < n; i++)
 				braa_ASNObject_Dispose(((struct braa_asnobject **) obj->pdata)[i]);
@@ -622,6 +647,7 @@ static void braa_InternalDumpASNObject(struct braa_asnobject * obj, int lvl)
 			}
 		case BRAAASN_SEQUENCE:
 		case BRAAASN_PDU_GETNEXTREQUEST:
+		case BRAAASN_PDU_GETBULKREQUEST:
 		case BRAAASN_PDU_GETREQUEST:
 		case BRAAASN_PDU_SETREQUEST:
 		case BRAAASN_PDU_GETRESPONSE:
@@ -704,6 +730,7 @@ void braa_ASNObject_ToString(struct braa_asnobject * obj, unsigned char * buffer
 		case BRAAASN_SEQUENCE:
 		case BRAAASN_PDU_GETREQUEST:
 		case BRAAASN_PDU_GETNEXTREQUEST:
+		case BRAAASN_PDU_GETBULKREQUEST:
 		case BRAAASN_PDU_GETRESPONSE:
 		case BRAAASN_PDU_SETREQUEST:
 			snprintf(buffer, size, "(Complex object type (tree))");

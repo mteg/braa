@@ -21,10 +21,11 @@
 
 void help(void)
 {
-	printf("braa 0.83 - (c) by Mateusz 'mteg' Golicz <mtg@elsat.net.pl> and contributors, 2003 - 2015\n");
+	printf("braa 0.9 - (c) by Mateusz 'mteg' Golicz <mtg@elsat.net.pl> and contributors, 2003 - 2015, 2024\n");
 	printf("usage: braa [options] [query1] [query2] ...\n");
 	printf("  -h        Show this help.\n");
 	printf("  -2        Claim to be a SNMP2C agent.\n");
+	printf("  -b <n>    Use GETBULK requests for walks.\n");
 	printf("  -v        Show short summary after doing all queries.\n");
 	printf("  -x        Hexdump octet-strings\n");
 	printf("  -t <s>    Wait <s> seconds for responses.\n");
@@ -68,13 +69,13 @@ int main(int argc, char **argv)
 	
 	int c, i, ver = BRAA_VERSION_SNMP1, verbose = 0,
 	    r = 3, time = 2, sdelay = 0, pass_delay = 500, hexdump = 0,
-	    xdelay = DEFAULT_XDELAY;
+	    xdelay = DEFAULT_XDELAY, bulks = 0;
 
 	struct query_hostrange * head = NULL;
 	struct queryhash * qh;
 	char error[ERRORBUFFER_SIZE];
 	
-	while((c = getopt(argc, argv, "a:h2vd:r:p:d:f:t:xw:")) != EOF)
+	while((c = getopt(argc, argv, "a:h2vd:r:p:d:f:t:xw:b:")) != EOF)
 	{
 		switch(c)
 		{
@@ -82,6 +83,7 @@ int main(int argc, char **argv)
 				help();
 				return(0);
 			case '2': ver = BRAA_VERSION_SNMP2C; break;
+			case 'b': bulks = atoi(optarg); break;
 			case 'v': verbose ++; break;
 			case 't': time = atoi(optarg); break;
 			case 'p': pass_delay = atoi(optarg); break;
@@ -179,7 +181,7 @@ int main(int argc, char **argv)
 		
 		for(;;)
 		{
-			if(!bapp_sendmessage(qh, s, r, xdelay, sdelay, pass_delay)) break;
+			if(!bapp_sendmessage(qh, s, r, bulks, xdelay, sdelay, pass_delay)) break;
 			if(bapp_processmessages(s, qh, hexdump)) break;
 			usleep(250);
 		}

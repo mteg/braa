@@ -37,6 +37,13 @@ asnobject * braa_GetNextRequestPDU_Create(void)
 	return(braa_RequestPDU_Create(BRAAASN_PDU_GETNEXTREQUEST));
 }
 
+asnobject * braa_GetBulkRequestPDU_Create(unsigned int bcnt)
+{
+	asnobject * a = braa_RequestPDU_Create(BRAAASN_PDU_GETBULKREQUEST);
+	((asnobject**) a->pdata)[2]->ldata = bcnt;
+	return a;
+}
+
 asnobject * braa_SetRequestPDU_Create(void)
 {
 	return(braa_RequestPDU_Create(BRAAASN_PDU_SETREQUEST));
@@ -119,6 +126,12 @@ asnobject * braa_GetNextRequestMsg_Create(char * community, int version)
 	return(braa_Msg_Create(pdu, community, version));
 }
 
+asnobject * braa_GetBulkRequestMsg_Create(char * community, int version, unsigned int bcnt)
+{
+	asnobject * pdu = braa_GetBulkRequestPDU_Create(bcnt);
+	return(braa_Msg_Create(pdu, community, version));
+}
+
 void braa_GetRequestMsg_Insert(asnobject *msg, oid *o)
 {
 	braa_GetRequestPDU_Insert(((asnobject**) msg->pdata)[2], o);
@@ -148,7 +161,8 @@ int braa_Msg_Identify(asnobject *msg)
 	t = ((asnobject**) msg->pdata)[2]->type;
 	
 	if(t == BRAAASN_PDU_GETRESPONSE || t == BRAAASN_PDU_GETREQUEST ||
-	   t == BRAAASN_PDU_GETNEXTREQUEST || t == BRAAASN_PDU_SETREQUEST)
+	   t == BRAAASN_PDU_GETNEXTREQUEST || t == BRAAASN_PDU_SETREQUEST || 
+	   t == BRAAASN_PDU_GETBULKREQUEST)
 		return(t);
 	else
 		return(BRAAASN_PDU_UNKNOWN);

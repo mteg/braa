@@ -64,7 +64,7 @@ struct queryhash * bapp_make_hash(int version, struct query_hostrange *head, cha
 
 
 int bapp_processmessages(int s, struct queryhash *qh, int hexdump);
-int bapp_sendmessage(struct queryhash *qh, int s, int retries, int xdelay, int sdelay, int pass_delay);
+int bapp_sendmessage(struct queryhash *qh, int s, int bulks, int retries, int xdelay, int sdelay, int pass_delay);
 #define MAX_RECV_PACKET 1600
 #define RETRIES_MAX 126
 #define DEFAULT_XDELAY 20000

@@ -362,7 +362,7 @@ struct queryhash * bapp_make_hash(int version, struct query_hostrange *head, cha
 	return(qh);
 }
 
-int bapp_sendmessage(struct queryhash *qh, int s, int retries, int xdelay, int sdelay, int pass_delay)
+int bapp_sendmessage(struct queryhash *qh, int s, int retries, int bulks, int xdelay, int sdelay, int pass_delay)
 {
 	struct sockaddr_in dst;
 	struct timeval tv;
@@ -445,7 +445,12 @@ int bapp_sendmessage(struct queryhash *qh, int s, int retries, int xdelay, int s
 //						printf("msec = %d, pass_delay = %d, proceeding\n", msec, pass_delay);
 				}
 				
-				walkmsg = braa_GetNextRequestMsg_Create(hr->community, qh->version);
+				if(bulks) {
+					walkmsg = braa_GetBulkRequestMsg_Create(hr->community, qh->version, bulks);
+				} else {
+					walkmsg = braa_GetNextRequestMsg_Create(hr->community, qh->version);
+				}
+
 				gettimeofday(&tv, NULL);
 				momentid = ((tv.tv_sec % 64) * 1000) + (tv.tv_usec / 1000);
 				braa_RequestMsg_ModifyID(walkmsg, BRAAASN_PDU_GETNEXTREQUEST | (momentid << 8) | (i << 24));
@@ -630,42 +635,47 @@ int bapp_processmessages(int s, struct queryhash *qh, int hexdump)
 					{
 						asnobject * name, * value;
 						
-						assert(braa_PDUMsg_GetVariableCount(ao) == 1);
-
-						name = braa_PDUMsg_GetVariableName(ao, 0);
-						assert(name->type == BRAAASN_OID);
+						int vc = braa_PDUMsg_GetVariableCount(ao);
+						if(vc >= 1) {
+							unsigned int vi;
+							for(vi = 0; vi<vc; vi++) {
+								name = braa_PDUMsg_GetVariableName(ao, vi);
+								assert(name->type == BRAAASN_OID);
 							
-						if(braa_OID_CompareN(q->range->first_oid[walkid], (oid*) name->pdata))
-						{
-							char buffer[500];
-
-							if(q->range->walk_ids[walkid])
-								printf("%s:", q->range->walk_ids[walkid]);
-
-							value = braa_PDUMsg_GetVariableValue(ao, 0);
-							printf("%s:%dms:", inet_ntoa(sa.sin_addr), delay);
-							braa_OID_ToString((oid*) name->pdata, buffer, 500);
-							printf("%s:", buffer);
-							braa_ASNObject_ToString(value, buffer, 500, hexdump);
-							printf("%s\n", buffer);
-							if(q->latest_oid[walkid])
-							{
-								if(braa_OID_Compare(q->latest_oid[walkid], (oid*) name->pdata))
+								if(braa_OID_CompareN(q->range->first_oid[walkid], (oid*) name->pdata))
 								{
-									fprintf(stderr,"%s:The oids in walk are not increasing!\n", inet_ntoa(sa.sin_addr));
+									char buffer[500];
+
+									if(q->range->walk_ids[walkid])
+										printf("%s:", q->range->walk_ids[walkid]);
+
+									value = braa_PDUMsg_GetVariableValue(ao, vi);
+									printf("%s:%dms:", inet_ntoa(sa.sin_addr), delay);
+									braa_OID_ToString((oid*) name->pdata, buffer, 500);
+									printf("%s:", buffer);
+									braa_ASNObject_ToString(value, buffer, 500, hexdump);
+									printf("%s\n", buffer);
+									if(q->latest_oid[walkid])
+									{
+										if(braa_OID_Compare(q->latest_oid[walkid], (oid*) name->pdata))
+										{
+											fprintf(stderr,"%s:The oids in walk are not increasing!\n", inet_ntoa(sa.sin_addr));
+											q->walk_retries[walkid] = RETRIES_MAX;
+											qh->responses_received++;
+											goto dispose;
+										}
+										braa_OID_Dispose(q->latest_oid[walkid]);
+									}
+									q->latest_oid[walkid] = braa_OID_Duplicate((oid*) name->pdata);
+									q->walk_retries[walkid] = 0;
+								}
+								else
+								{	/* end of walk */
 									q->walk_retries[walkid] = RETRIES_MAX;
 									qh->responses_received++;
-									break;
+									goto dispose;
 								}
-								braa_OID_Dispose(q->latest_oid[walkid]);
 							}
-							q->latest_oid[walkid] = braa_OID_Duplicate((oid*) name->pdata);
-							q->walk_retries[walkid] = 0;
-						}
-						else
-						{	/* end of walk */
-							q->walk_retries[walkid] = RETRIES_MAX;
-							qh->responses_received++;
 						}
 					}
 					break;
@@ -729,7 +739,7 @@ int bapp_processmessages(int s, struct queryhash *qh, int hexdump)
 					fprintf(stderr, "%s: Message cannot be dispatched!\n", inet_ntoa(sa.sin_addr));
 					break;		
 				
-			}
+			}			
 			
 //			braa_ASNObject_Dump(ao);
 dispose:

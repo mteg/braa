@@ -14,5 +14,6 @@ void braa_SetRequestMsg_Insert(asnobject *msg, oid *o, asnobject *val);
 asnobject * braa_SetRequestMsg_Create(char * community, int version);
 int braa_PDUMsg_GetRequestID(asnobject *msg);
 asnobject * braa_GetNextRequestMsg_Create(char * community, int version);
+asnobject * braa_GetBulkRequestMsg_Create(char * community, int version, unsigned int bcnt);
 void braa_GetNextRequestMsg_Insert(asnobject *msg, oid *o);
 void braa_RequestMsg_ModifyID(asnobject *msg, int to);
