@@ -1,9 +1,9 @@
 
 #ifdef SOLARIS_SPARC
-typedef uint32_t u_int32_t;
-typedef uint16_t u_int16_t;
-typedef uint8_t u_int8_t;
-typedef uint64_t u_int64_t;
+typedef uint32_t uint32_t;
+typedef uint16_t uint16_t;
+typedef uint8_t uint8_t;
+typedef uint64_t uint64_t;
 #endif
 
 // #define DEBUG
@@ -52,7 +52,7 @@ typedef uint64_t u_int64_t;
 
 struct braa_asnobject
 {
-	u_int8_t type;
+	uint8_t type;
 	
 	int32_t ldata;
 	void * pdata;
@@ -60,7 +60,7 @@ struct braa_asnobject
 
 typedef struct braa_asnobject asnobject;
 
-static inline struct braa_asnobject * braa_ASNObject_Create(u_int8_t type, u_int32_t ldata, void * pdata)
+static inline struct braa_asnobject * braa_ASNObject_Create(uint8_t type, uint32_t ldata, void * pdata)
 {
 	struct braa_asnobject * ret;
 	assert(ret = (struct braa_asnobject*) malloc(sizeof(struct braa_asnobject)));
@@ -70,8 +70,8 @@ static inline struct braa_asnobject * braa_ASNObject_Create(u_int8_t type, u_int
 	return(ret);
 }
 
-int braa_ASNObject_EncodeBER(struct braa_asnobject * data, u_int8_t * buffer, u_int32_t size);
-struct braa_asnobject * braa_ASNObject_DecodeBER(u_int8_t * data, u_int32_t size);
+int braa_ASNObject_EncodeBER(struct braa_asnobject * data, uint8_t * buffer, uint32_t size);
+struct braa_asnobject * braa_ASNObject_DecodeBER(uint8_t * data, uint32_t size);
 void braa_ASNObject_Dispose(struct braa_asnobject * obj);
 void braa_ASNObject_Dump(struct braa_asnobject * obj);
 void braa_ASNObject_ToString(struct braa_asnobject * obj, unsigned char * buffer, int size, int hexdump);

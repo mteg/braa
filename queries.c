@@ -3,13 +3,14 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <stdint.h>
 #include <arpa/inet.h>
 #include <errno.h>
 #include <stdio.h>
+#include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include <sys/timeb.h>
 #include "braaoids.h"
 #include "braaasn.h"
 #include "braaprotocol.h"
@@ -43,8 +44,8 @@ int bapp_rangesplit_query(struct query_hostrange ** head, char * string, char * 
 		 * queries, * portno = NULL,
 		 * nxqry;
 	struct query_hostrange * hr, * prev;
-	u_int32_t hostrange_start, hostrange_end;
-	u_int16_t port = 161;
+	uint32_t hostrange_start, hostrange_end;
+	uint16_t port = 161;
 	struct in_addr ina;
 		 
 	assert(string = strdup(string));
@@ -130,7 +131,7 @@ int bapp_rangesplit_query(struct query_hostrange ** head, char * string, char * 
 
 		if(hostrange_start >= hr->start && hostrange_end <= hr->end)
 		{
-			u_int32_t bef = hostrange_start - hr->start, aft = hr->end - hostrange_end;
+			uint32_t bef = hostrange_start - hr->start, aft = hr->end - hostrange_end;
 			
 			if(bef)
 			{
@@ -215,7 +216,7 @@ struct queryhash * bapp_make_hash(int version, struct query_hostrange *head, cha
 		char ** walk_ids = NULL;
 		
 		int get_count = 0, set_count = 0, walk_count = 0;
-		u_int32_t host;
+		uint32_t host;
 		
 		struct query * hosts;
 
@@ -344,10 +345,10 @@ struct queryhash * bapp_make_hash(int version, struct query_hostrange *head, cha
 			{
 				assert(thisquery->latest_oid = (oid**) gmalloc(sizeof(oid*) * walk_count));
 				assert(thisquery->walk_retries = (char*) gmalloc(sizeof(char) * walk_count));
-				assert(thisquery->walk_contact = (struct timeb*) gmalloc(sizeof(struct timeb) * walk_count));
+				assert(thisquery->walk_contact = (struct timespec*) gmalloc(sizeof(struct timespec) * walk_count));
 				memset(thisquery->latest_oid, 0, sizeof(oid*) * walk_count);
 				memset(thisquery->walk_retries, 0, sizeof(char) * walk_count);
-				memset(thisquery->walk_contact, 0, sizeof(struct timeb) * walk_count);
+				memset(thisquery->walk_contact, 0, sizeof(struct timespec) * walk_count);
 			}
 			else
 			{
@@ -365,10 +366,10 @@ struct queryhash * bapp_make_hash(int version, struct query_hostrange *head, cha
 int bapp_sendmessage(struct queryhash *qh, int s, int retries, int bulks, int xdelay, int sdelay, int pass_delay)
 {
 	struct sockaddr_in dst;
-	struct timeval tv;
+	struct timespec tv;
 	struct query * q = qh->last_sent;
 	struct query * start_query = qh->last_sent;
-	u_int16_t momentid;
+	uint16_t momentid;
 	char buffer[MAX_PACKET_SIZE];
 	int len, activity = 0;
 	
@@ -384,8 +385,8 @@ int bapp_sendmessage(struct queryhash *qh, int s, int retries, int bulks, int xd
 
 		if(q->range->get_message && (q->get_retries < retries))
 		{
-			gettimeofday(&tv, NULL);
-			momentid = ((tv.tv_sec % 64) * 1000) + (tv.tv_usec / 1000);
+			clock_gettime(CLOCK_MONOTONIC, &tv);
+			momentid = ((tv.tv_sec % 64) * 1000) + (tv.tv_nsec / 1000000);
 			braa_RequestMsg_ModifyID(q->range->get_message, BRAAASN_PDU_GETREQUEST | (momentid << 8));
 			if((len = braa_ASNObject_EncodeBER(q->range->get_message, buffer, MAX_PACKET_SIZE)) < 0)
 				fprintf(stderr, "Trouble encoding BRAAASN_PDU_GETREQUEST message for %s. Internal error?\n", inet_ntoa(dst.sin_addr));
@@ -401,8 +402,8 @@ int bapp_sendmessage(struct queryhash *qh, int s, int retries, int bulks, int xd
 
 		if(q->range->set_message && (q->set_retries < retries))
 		{
-			gettimeofday(&tv, NULL);
-			momentid = ((tv.tv_sec % 64) * 1000) + (tv.tv_usec / 1000);
+			clock_gettime(CLOCK_MONOTONIC, &tv);
+			momentid = ((tv.tv_sec % 64) * 1000) + (tv.tv_nsec / 1000000);
 			braa_RequestMsg_ModifyID(q->range->set_message, BRAAASN_PDU_SETREQUEST | (momentid << 8));
 			if((len = braa_ASNObject_EncodeBER(q->range->set_message, buffer, MAX_PACKET_SIZE)) < 0)
 				fprintf(stderr, "Trouble encoding BRAAASN_PDU_SETREQUEST message for %s. Internal error?\n", inet_ntoa(dst.sin_addr));
@@ -422,19 +423,19 @@ int bapp_sendmessage(struct queryhash *qh, int s, int retries, int bulks, int xd
 			for(i = 0; i<wc; i++)
 			{
 				asnobject * walkmsg;
-				struct timeb ft;
+				struct timespec ft;
 				if(q->walk_retries[i] >= retries) continue;
-				
-				ftime(&ft);
+
+				clock_gettime(CLOCK_MONOTONIC, &ft);
 				if(q->walk_retries[i] > 0)
 				{
-					struct timeb *prv;
+					struct timespec *prv;
 					unsigned int msec;
 
 					prv = &q->walk_contact[i];
-					msec = (ft.time - prv->time) * 1000 + ft.millitm - prv->millitm;
-					
-					
+					msec = (ft.tv_sec - prv->tv_sec) * 1000 + (ft.tv_nsec - prv->tv_nsec)/1000000;
+
+
 					if(msec < pass_delay)
 					{
 //					printf("msec = %d, pass_delay = %d, waiting\n", msec, pass_delay);
@@ -444,15 +445,15 @@ int bapp_sendmessage(struct queryhash *qh, int s, int retries, int bulks, int xd
 //					else
 //						printf("msec = %d, pass_delay = %d, proceeding\n", msec, pass_delay);
 				}
-				
+
 				if(bulks) {
 					walkmsg = braa_GetBulkRequestMsg_Create(hr->community, qh->version, bulks);
 				} else {
 					walkmsg = braa_GetNextRequestMsg_Create(hr->community, qh->version);
 				}
 
-				gettimeofday(&tv, NULL);
-				momentid = ((tv.tv_sec % 64) * 1000) + (tv.tv_usec / 1000);
+				clock_gettime(CLOCK_MONOTONIC, &tv);
+				momentid = ((tv.tv_sec % 64) * 1000) + (tv.tv_nsec / 1000000);
 				braa_RequestMsg_ModifyID(walkmsg, BRAAASN_PDU_GETNEXTREQUEST | (momentid << 8) | (i << 24));
 
 				if(q->latest_oid[i])
@@ -470,9 +471,9 @@ int bapp_sendmessage(struct queryhash *qh, int s, int retries, int bulks, int xd
 				braa_ASNObject_Dispose(walkmsg);
 				q->walk_retries[i]++;
 				activity = 1;
-				
-				memcpy(&q->walk_contact[i], &ft, sizeof(struct timeb));
-				
+
+				memcpy(&q->walk_contact[i], &ft, sizeof(struct timespec));
+
 				if(sdelay) usleep(sdelay);
 			}
 		}
@@ -507,7 +508,7 @@ int bapp_processmessages(int s, struct queryhash *qh, int hexdump)
 		char pbuff[MAX_RECV_PACKET];
 		asnobject * ao;
 		
-		struct timeval tv;
+		struct timespec tv;
 		int delay, secd;
 		
 		if((l = recvfrom(s, pbuff, MAX_RECV_PACKET, 0, (struct sockaddr *) &sa, (socklen_t *) &salen)) <= 0)
@@ -515,12 +516,12 @@ int bapp_processmessages(int s, struct queryhash *qh, int hexdump)
 			if(errno == EAGAIN) break;
 			perror("recvfrom");
 		}
-		gettimeofday(&tv, NULL);
+		clock_gettime(CLOCK_MONOTONIC, &tv);
 				
 		ao = braa_ASNObject_DecodeBER(pbuff, l);
 		if(ao)
 		{
-			u_int32_t host;
+			uint32_t host;
 			struct query *q;
 			int resp, error, ei;
 			
@@ -545,7 +546,7 @@ int bapp_processmessages(int s, struct queryhash *qh, int hexdump)
 
 			secd = (tv.tv_sec % 64) - (((resp >> 8) & 0xffff) / 1000);
 			if(secd < 0) secd = 64 - secd;
-			delay = secd * 1000 + (tv.tv_usec / 1000) - (((resp >> 8) & 0xffff) % 1000);
+			delay = secd * 1000 + (tv.tv_nsec / 1000000) - (((resp >> 8) & 0xffff) % 1000);
 
 			error = braa_PDUMsg_GetErrorCode(ao);
 			ei = braa_PDUMsg_GetErrorIndex(ao);

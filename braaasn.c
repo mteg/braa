@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -12,13 +13,13 @@
 
 #define BRAAASN_BER_MAXDEPTH 10
 
-static u_int32_t braa_EncodeShortBitstring(u_int8_t * buffer, u_int32_t v)
+static uint32_t braa_EncodeShortBitstring(uint8_t * buffer, uint32_t v)
 {
 	int i, len = 0;
 	
 	for(i = 0; i < 4; i++)
 	{
-		u_int32_t c;
+		uint32_t c;
 		debug("  Bitstring: enc: %x AND %x\n", v, v & 0xff800000);
 		if((v & 0xff800000) || len != 0 || i == 3)
 		{
@@ -31,7 +32,7 @@ static u_int32_t braa_EncodeShortBitstring(u_int8_t * buffer, u_int32_t v)
 	return(len);
 }
 
-static u_int32_t braa_EncodeShortBitstringOid(u_int8_t * buffer, u_int32_t v)
+static uint32_t braa_EncodeShortBitstringOid(uint8_t * buffer, uint32_t v)
 {
 /*	0 - 6
 	0 - 13
@@ -76,9 +77,9 @@ static u_int32_t braa_EncodeShortBitstringOid(u_int8_t * buffer, u_int32_t v)
 }
 
 
-static u_int32_t braa_FetchShortBitstring(u_int8_t * data, int max, u_int8_t * status)
+static uint32_t braa_FetchShortBitstring(uint8_t * data, int max, uint8_t * status)
 {
-	u_int32_t ret = 0;
+	uint32_t ret = 0;
 	int i;
 	
 	for(i = 0; i < 5 && i < max; i++)
@@ -98,11 +99,11 @@ static u_int32_t braa_FetchShortBitstring(u_int8_t * data, int max, u_int8_t * s
 
 
 
-struct braa_asnobject * braa_InternalDecodeBER(u_int8_t * data, u_int32_t size, int level, int *bytesused)
+struct braa_asnobject * braa_InternalDecodeBER(uint8_t * data, uint32_t size, int level, int *bytesused)
 {
-	u_int8_t tag;
-	u_int8_t type, structured;
-	u_int32_t len;
+	uint8_t tag;
+	uint8_t type, structured;
+	uint32_t len;
 	int bu = 0;
 
 	if(level > BRAAASN_BER_MAXDEPTH) 
@@ -243,9 +244,9 @@ struct braa_asnobject * braa_InternalDecodeBER(u_int8_t * data, u_int32_t size, 
 		}
 		case BRAAASN_COUNTER64:
 		{
-			u_int64_t v = 0;
+			uint64_t v = 0;
 			unsigned int i;
-			u_int64_t *vptr;
+			uint64_t *vptr;
 			
 			debug(" => Decoding 64-bit integer, %d bytes of data\n", len);
 			
@@ -258,7 +259,7 @@ struct braa_asnobject * braa_InternalDecodeBER(u_int8_t * data, u_int32_t size, 
 			bu += len;
 			*bytesused = bu;
 			
-			vptr = (u_int64_t*) malloc(sizeof(u_int64_t));
+			vptr = (uint64_t*) malloc(sizeof(uint64_t));
 			if(!vptr) return(NULL);
 			*vptr = v;
 			
@@ -269,14 +270,14 @@ struct braa_asnobject * braa_InternalDecodeBER(u_int8_t * data, u_int32_t size, 
 		case BRAAASN_OCTETSTRING:
 		{
 			struct braa_asnobject * ret;
-			u_int8_t * ostr;
+			uint8_t * ostr;
 			
 			if(len > BRAAASN_OCTETSTRING_LIMIT)
 			{
 				debug("Refusing to decode an octet string larger than %d bytes\n", BRAAASN_OCTETSTRING_LIMIT);
 				return (NULL);
 			}
-			ostr = (u_int8_t *) malloc(len + 1);
+			ostr = (uint8_t *) malloc(len + 1);
 			if(!ostr) return(NULL); /* No memory */
 			
 			memcpy(ostr, data, len);
@@ -305,9 +306,9 @@ struct braa_asnobject * braa_InternalDecodeBER(u_int8_t * data, u_int32_t size, 
 		{
 			struct braa_asnobject * ret;
 			int pos = 0;
-			u_int32_t * ostr = (u_int32_t *) malloc((len * 4) + 4);
-			u_int32_t id;
-			u_int8_t status;
+			uint32_t * ostr = (uint32_t *) malloc((len * 4) + 4);
+			uint32_t id;
+			uint8_t status;
 			
 			if(!ostr) return(NULL); /* Out of mem. */
 			id = braa_FetchShortBitstring(data, len, &status);
@@ -414,7 +415,7 @@ struct braa_asnobject * braa_InternalDecodeBER(u_int8_t * data, u_int32_t size, 
 	
 }
 
-int braa_ASNObject_EncodeBER(struct braa_asnobject * data, u_int8_t * buffer, u_int32_t size)
+int braa_ASNObject_EncodeBER(struct braa_asnobject * data, uint8_t * buffer, uint32_t size)
 {
 	int len = 0;
 	if(size < 3) 
@@ -433,7 +434,7 @@ int braa_ASNObject_EncodeBER(struct braa_asnobject * data, u_int8_t * buffer, u_
 		case BRAAASN_GAUGE:
 		case BRAAASN_TIMETICKS:
 		{
-			u_int32_t v = data->ldata;
+			uint32_t v = data->ldata;
 			
 			if(size < 7)
 			{
@@ -472,7 +473,7 @@ int braa_ASNObject_EncodeBER(struct braa_asnobject * data, u_int8_t * buffer, u_
 		}
 		case BRAAASN_OID:
 		{
-			u_int32_t * ostr = ((oid*) data->pdata)->oid;
+			uint32_t * ostr = ((oid*) data->pdata)->oid;
 			int n = ((oid*) data->pdata)->len;
 			int pos;
 			
@@ -550,7 +551,7 @@ int braa_ASNObject_EncodeBER(struct braa_asnobject * data, u_int8_t * buffer, u_
 	
 }
 
-struct braa_asnobject * braa_ASNObject_DecodeBER(u_int8_t * data, u_int32_t size)
+struct braa_asnobject * braa_ASNObject_DecodeBER(uint8_t * data, uint32_t size)
 {
 	int bu;
 	struct braa_asnobject * bi;
@@ -625,7 +626,7 @@ static void braa_InternalDumpASNObject(struct braa_asnobject * obj, int lvl)
 			fprintf(stderr, "%s=> String: '%s'\n", indent, (char*) obj->pdata);
 			break;
 		case BRAAASN_COUNTER64:
-			fprintf(stderr, "%s=> Counter64: '%llu'\n", indent, *((u_int64_t*) obj->pdata));
+			fprintf(stderr, "%s=> Counter64: '%llu'\n", indent, (long long unsigned int) *((uint64_t*) obj->pdata));
 			break;
 		case BRAAASN_IPADDR:
 			{
@@ -636,7 +637,7 @@ static void braa_InternalDumpASNObject(struct braa_asnobject * obj, int lvl)
 			break;
 		case BRAAASN_OID:
 			{
-				u_int32_t * o = ((oid*) obj->pdata)->oid;
+				uint32_t * o = ((oid*) obj->pdata)->oid;
 				unsigned long len = ((oid*) obj->pdata)->len;
 				int i;
 				
@@ -684,7 +685,7 @@ void braa_ASNObject_ToString(struct braa_asnobject * obj, unsigned char * buffer
 			snprintf(buffer, size, "(null object)");
 			break;
 		case BRAAASN_COUNTER64:
-			snprintf(buffer, size, "%llu", *((u_int64_t*) obj->pdata));
+			snprintf(buffer, size, "%llu", (long long unsigned int) *((uint64_t*) obj->pdata));
 			break;
 		case BRAAASN_INTEGER:
 			snprintf(buffer, size, "%d", obj->ldata);

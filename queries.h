@@ -3,9 +3,9 @@ struct query_hostrange
 {
 	struct query_hostrange * next;
 	
-	u_int32_t start;
-	u_int32_t end;
-	u_int16_t port;
+	uint32_t start;
+	uint32_t end;
+	uint16_t port;
 	
 	int query_count;
 	char ** queries;
@@ -31,14 +31,14 @@ struct query
 	struct query * hashnext;
 	struct query * listnext;
 	
-	u_int32_t host;
+	uint32_t host;
 
 	char get_retries;
 	char set_retries;
 
 	oid ** latest_oid;
 	char * walk_retries; 
-	struct timeb * walk_contact;
+	struct timespec * walk_contact;
 	
 	struct query_hostrange * range;
 }; /* 26 + 2 bytes */

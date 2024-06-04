@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 #include "braaoids.h"
 #include "braaasn.h"
@@ -55,7 +56,7 @@ void braa_GetRequestPDU_Insert(asnobject *pdu, oid *o)
 			  * var,
 			  ** varseql,
 			  ** vsq = (asnobject**) (((asnobject**) pdu->pdata)[3]->pdata);
-	u_int32_t vsl = ((asnobject**) pdu->pdata)[3]->ldata;
+	uint32_t vsl = ((asnobject**) pdu->pdata)[3]->ldata;
 	
 	assert(varseql = (struct braa_asnobject**) gmalloc(sizeof(struct braa_asnobject*) * 2));
 
@@ -78,7 +79,7 @@ void braa_SetRequestPDU_Insert(asnobject *pdu, oid *o, asnobject *value)
 			  * var,
 			  ** varseql,
 			  ** vsq = (asnobject**) (((asnobject**) pdu->pdata)[3]->pdata);
-	u_int32_t vsl = ((asnobject**) pdu->pdata)[3]->ldata;
+	uint32_t vsl = ((asnobject**) pdu->pdata)[3]->ldata;
 	
 	assert(varseql = (struct braa_asnobject**) gmalloc(sizeof(struct braa_asnobject*) * 2));
 
