@@ -25,19 +25,19 @@ void braa_OID_Dispose(oid *o)
 
 void braa_OID_ToString(oid * o, unsigned char * buffer, int buffer_len)
 {
-	int l = 0, i;
-	
+	int l = 0, i;	
 	buffer[0] = 0;
 	for(i = 0; i<o->len; i++)
 	{
-		unsigned char ib[14];
-		int n;
-		
-		n = snprintf(ib, 12, ".%d", o->oid[i]);
-		if((l + n + 1) < buffer_len)
-			sprintf(buffer, "%s%s", buffer, ib);
-		else
-			break;
+                unsigned char ib[14];
+                int n;
+                
+                n = snprintf(ib, 12, ".%d", o->oid[i]);
+                if((l + n + 1) < buffer_len) {          
+                        sprintf(buffer+l, "%s", ib);
+                        l += n;
+                } else
+                        break;
 	}
 }
 
