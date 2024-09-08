@@ -230,10 +230,8 @@ values of OID's (for instance .1.3.6.1.2.1.1.5.0 instead of system.sysName.0).
 
 7. AUTHORS, ACKNOWLEDGEMENTS
 
-  Mateusz 'mteg' Golicz <mtg@elsat.net.pl>
+  Mateusz 'mteg' Golicz
 
 8. LICENSE
 
   The package is licensed on GNU General Public License. See COPYING file.
-
-Mateusz 'mteg' Golicz <mtg@elsat.net.pl>

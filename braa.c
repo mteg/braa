@@ -21,7 +21,7 @@
 
 void help(void)
 {
-	printf("braa 0.9 - (c) by Mateusz 'mteg' Golicz <mtg@elsat.net.pl> and contributors, 2003 - 2015, 2024\n");
+	printf("braa 0.9.1 - (c) by Mateusz 'mteg' Golicz and contributors, 2003 - 2015, 2024\n");
 	printf("usage: braa [options] [query1] [query2] ...\n");
 	printf("  -h        Show this help.\n");
 	printf("  -2        Claim to be a SNMP2C agent.\n");
