@@ -622,13 +622,16 @@ int bapp_processmessages(int s, struct queryhash *qh, int hexdump)
 						if(q->range->walk_ids[walkid])
 							fprintf(stderr, "%s:", q->range->walk_ids[walkid]);
 
-						assert(ei == 1);
 
-						name = braa_PDUMsg_GetVariableName(ao, 0);
-						assert(name->type == BRAAASN_OID);
-						braa_OID_ToString((oid*) name->pdata, buffer, 500);
-							
-						fprintf(stderr, "%s:%dms:%s:Error %s.\n", inet_ntoa(sa.sin_addr), delay, buffer, braa_StrError(error));
+						if(ei == 1) {
+							name = braa_PDUMsg_GetVariableName(ao, 0);
+							assert(name->type == BRAAASN_OID);
+							braa_OID_ToString((oid*) name->pdata, buffer, 500);
+								
+							fprintf(stderr, "%s:%dms:%s:Error %s.\n", inet_ntoa(sa.sin_addr), delay, buffer, braa_StrError(error));
+						} else {
+							fprintf(stderr, "%s:%dms:-:General SNMP error\n", inet_ntoa(sa.sin_addr), delay);							
+						}					
 						q->walk_retries[walkid] = RETRIES_MAX;
 						qh->responses_received++;
 					}

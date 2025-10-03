@@ -27,6 +27,9 @@ all: ${OBJECTS}
 	cc $(OBJECTS) -o $(OUT) $(LDFLAGS) $(LIBS)
 	strip $(OUT)
 
+static: ${OBJECTS}
+	cc $(OBJECTS) -static -o $(OUT).static $(LDFLAGS) $(LIBS)
+
 clean:
 	rm -rf $(OBJECTS) $(OUT)
 	
