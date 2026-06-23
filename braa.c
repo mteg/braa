@@ -31,7 +31,7 @@ void help(void)
 	printf("  -t <s>    Wait <s> seconds for responses.\n");
 	printf("  -d <s>    Wait <s> microseconds after sending each packet.\n");
 	printf("  -w <s>    Wait <s> microseconds after sending a group of query packets.\n");
-	printf("  -p <s>    Wait <s> miliseconds between subsequent passes.\n");
+	printf("  -p <s>    Wait <s> milliseconds between subsequent passes.\n");
 	printf("  -f <file> Load queries from file <file> (one by line).\n");
 	printf("  -a <time> Quit after <time> seconds, independent on what happens.\n");
 	printf("  -r <rc>   Retry count (default: 3).\n");
