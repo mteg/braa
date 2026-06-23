@@ -83,7 +83,7 @@ values of OID's (for instance .1.3.6.1.2.1.1.5.0 instead of system.sysName.0).
 
 
     Another query type is the WALK query. WALK queries make braa traverse
-  the object tree hierachy ,,below'' a specified object, like snmpwalk
+  the object tree hierarchy ,,below'' a specified object, like snmpwalk
   does. The second example:
 	10.253.101.1:.1.3.6.1.2.1.1.*
     is a WALK query on the 'system' (.1.3.6.1.2.1.1) object; the output
@@ -122,7 +122,7 @@ values of OID's (for instance .1.3.6.1.2.1.1.5.0 instead of system.sysName.0).
     ... a comma character is used to separate queries in case one wants to
   specify more queries in a query list. The example also shows how to make
   advantage of query IDs. The IDs (after a slash) do not affect the querying
-  process itself, but they are just printed before appropiate lines of output:
+  process itself, but they are just printed before appropriate lines of output:
   
     ContactPerson:10.253.101.1:25ms:.1.3.6.1.2.1.1.4.0:Mateusz Golicz MG452-RIPE <mtg@elsat.net.pl>
     RoutingTable:10.253.101.1:29ms:.1.3.6.1.2.1.4.20.1.1.10.253.101.1:10.253.101.1
